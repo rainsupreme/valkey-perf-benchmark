@@ -3,7 +3,8 @@
 #
 # To regenerate requirements.txt with pinned versions and hashes:
 #   pip-compile --generate-hashes requirements.in -o requirements.txt
-#   NOTE: Must run with Python 3.10+ to capture all transitive deps for CI.
+#   NOTE: Must target Python 3.10 (CI version) to capture all transitive deps.
+#   Recommended: uv pip compile --generate-hashes --python-version 3.10 requirements.in -o requirements.txt
 #
 # To upgrade all packages:
 #   pip-compile --generate-hashes --upgrade requirements.in -o requirements.txt
