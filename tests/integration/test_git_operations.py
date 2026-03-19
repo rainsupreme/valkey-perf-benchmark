@@ -1,4 +1,4 @@
-"""Integration tests for git operations used in PR benchmarking workflow."""
+"""Integration tests for git operations used in benchmarking workflows."""
 
 import pytest
 import subprocess

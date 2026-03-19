@@ -5,15 +5,11 @@ repos (with a local bare remote to simulate fetch without network access).
 """
 
 import subprocess
-from pathlib import Path
 
 import pytest
 
 from .conftest import GitRepoFixture
 
-import sys
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from utils.git_utils import resolve_ref, get_commit_timestamp
 
 
@@ -44,19 +40,25 @@ def repo_with_remote(tmp_path):
     # Clone to bare
     subprocess.run(
         ["git", "clone", "--bare", str(upstream.path), str(bare_path)],
-        capture_output=True, text=True, check=True,
+        capture_output=True,
+        text=True,
+        check=True,
     )
 
     # Make a shallow clone (depth=1) from the bare remote
     subprocess.run(
         ["git", "clone", "--depth=1", str(bare_path), str(clone_path)],
-        capture_output=True, text=True, check=True,
+        capture_output=True,
+        text=True,
+        check=True,
     )
     # Configure user for any commits we might need
     for key, val in [("user.email", "test@example.com"), ("user.name", "Test")]:
         subprocess.run(
             ["git", "config", key, val],
-            cwd=clone_path, capture_output=True, text=True,
+            cwd=clone_path,
+            capture_output=True,
+            text=True,
         )
 
     return {

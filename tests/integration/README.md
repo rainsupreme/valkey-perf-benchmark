@@ -1,6 +1,6 @@
-# Integration Tests for PR Benchmarking Workflow
+# Integration Tests
 
-This directory contains integration tests that validate the functionality used in the PR benchmarking workflow without requiring a real Valkey server.
+This directory contains integration tests that validate benchmark workflows without requiring a real Valkey server.
 
 ## Test Coverage
 

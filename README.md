@@ -86,7 +86,7 @@ valkey-perf-benchmark/
 ├── cpu_monitor.py           # Generic CPU monitoring
 ├── process_metrics.py       # Processes and formats benchmark results
 ├── tests/                   # Test suite
-│   ├── integration/        # Integration tests for PR workflow
+│   ├── integration/        # Integration tests
 │   └── test_*.py           # Unit tests (pytest)
 ├── scripts/                 # Helper scripts
 │   ├── setup_datasets.py   # FTS dataset generator
@@ -416,7 +416,7 @@ black .
 The project includes a comprehensive test suite:
 
 - **Unit tests**: Cover core logic functions (parsing, validation, statistics, metrics processing)
-- **Integration tests**: Validate the PR benchmarking workflow with mock components
+- **Integration tests**: Validate benchmark workflows with mock components
 
 Tests run without requiring a Valkey server or PostgreSQL.
 
@@ -439,24 +439,7 @@ python -m pytest tests/ -v -m "not slow"
 
 #### Integration Tests
 
-The integration tests (`tests/integration/`) validate the PR benchmarking workflow:
-
-| Test File | Coverage |
-|-----------|----------|
-| `test_git_operations.py` | Git repo operations, branch management, PR simulation |
-| `test_comparison_workflow.py` | Metrics comparison, statistical analysis, markdown output |
-| `test_benchmark_execution.py` | Config loading, command building, metrics processing |
-| `test_pr_workflow.py` | End-to-end workflow simulation, regression detection |
-
-Key features:
-- **Mock benchmark binary**: Simulates `valkey-benchmark` output without real server
-- **Real git operations**: Uses temporary repositories for authentic testing
-- **No external dependencies**: Runs in CI without Valkey, databases, or network
-- **Fast execution**: ~1-2 seconds for all integration tests
-
-See `tests/integration/README.md` for detailed documentation.
-
-Tests are automatically run on every push and pull request via GitHub Actions (`.github/workflows/tests.yml`).
+The integration tests (`tests/integration/`) validate benchmark workflows end-to-end using mock components — no Valkey server, database, or network required. See `tests/integration/README.md` for details.
 
 ### Adding New Configurations
 

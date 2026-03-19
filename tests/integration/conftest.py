@@ -5,11 +5,16 @@ import os
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional
 
 import pytest
+
+# Make project root importable for all integration tests
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 
 # ---------------------------------------------------------------------------
@@ -103,7 +108,9 @@ class GitRepoFixture:
             check=True,
         )
 
-    def create_commit(self, message: str, files: Optional[Dict[str, str]] = None) -> str:
+    def create_commit(
+        self, message: str, files: Optional[Dict[str, str]] = None
+    ) -> str:
         """Create a commit with optional file changes. Returns commit SHA."""
         if files:
             for filename, content in files.items():
@@ -287,3 +294,93 @@ def write_metrics_file(path: Path, metrics: List[Dict]) -> None:
 def read_metrics_file(path: Path) -> List[Dict]:
     """Read metrics from a JSON file."""
     return json.loads(path.read_text())
+
+
+# ---------------------------------------------------------------------------
+# Comparison Helper
+# ---------------------------------------------------------------------------
+
+
+def run_comparison(
+    baseline_path: Path,
+    new_path: Path,
+    output_path: Path,
+    extra_args: Optional[List[str]] = None,
+    check: bool = False,
+) -> subprocess.CompletedProcess:
+    """Run compare_benchmark_results.py and return the result.
+
+    Args:
+        baseline_path: Path to baseline metrics JSON.
+        new_path: Path to new metrics JSON.
+        output_path: Path for the markdown output.
+        extra_args: Additional CLI arguments (e.g. ["--metrics", "rps"]).
+        check: If True, raise on non-zero exit code.
+    """
+    cmd = [
+        sys.executable,
+        "utils/compare_benchmark_results.py",
+        "--baseline",
+        str(baseline_path),
+        "--new",
+        str(new_path),
+        "--output",
+        str(output_path),
+    ]
+    if extra_args:
+        cmd.extend(extra_args)
+
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        cwd=PROJECT_ROOT,
+        check=check,
+    )
+
+
+def run_comparison_with_metrics(
+    tmp_path: Path,
+    baseline_metrics: List[Dict],
+    new_metrics: List[Dict],
+    extra_args: Optional[List[str]] = None,
+) -> str:
+    """Write metrics files, run comparison, return output markdown content.
+
+    Convenience wrapper for the common pattern of creating two metrics files,
+    running the comparison script, and reading the result.
+
+    Returns:
+        The markdown content of the comparison output.
+
+    Raises:
+        AssertionError: If the comparison script exits with non-zero status.
+    """
+    baseline_path = tmp_path / "baseline" / "metrics.json"
+    new_path = tmp_path / "new" / "metrics.json"
+    output_path = tmp_path / "comparison.md"
+
+    write_metrics_file(baseline_path, baseline_metrics)
+    write_metrics_file(new_path, new_metrics)
+
+    result = run_comparison(baseline_path, new_path, output_path, extra_args)
+    assert result.returncode == 0, f"Comparison failed: {result.stderr}"
+    return output_path.read_text()
+
+
+# ---------------------------------------------------------------------------
+# Metrics Processor Fixture
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def metrics_processor():
+    """Create a default MetricsProcessor for testing."""
+    from process_metrics import MetricsProcessor
+
+    return MetricsProcessor(
+        commit_id="abc123",
+        cluster_mode=False,
+        tls_mode=False,
+        commit_time="2024-01-01T00:00:00Z",
+    )

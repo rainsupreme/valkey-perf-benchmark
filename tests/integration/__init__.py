@@ -1,1 +1,1 @@
-"""Integration tests for PR benchmarking workflow."""
+"""Integration tests for the valkey-perf-benchmark project."""
