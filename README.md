@@ -85,7 +85,9 @@ valkey-perf-benchmark/
 ├── profiler.py              # Generic performance profiler (flamegraphs)
 ├── cpu_monitor.py           # Generic CPU monitoring
 ├── process_metrics.py       # Processes and formats benchmark results
-├── tests/                   # Unit tests (pytest + hypothesis)
+├── tests/                   # Test suite
+│   ├── integration/        # Integration tests for PR workflow
+│   └── test_*.py           # Unit tests (pytest)
 ├── scripts/                 # Helper scripts
 │   ├── setup_datasets.py   # FTS dataset generator
 │   ├── flamegraph.pl       # Flamegraph visualization
@@ -411,7 +413,12 @@ black .
 
 ### Running Tests
 
-The project includes a test suite covering core logic functions (parsing, validation, statistics, metrics processing, etc.). Tests run without requiring a Valkey server or PostgreSQL.
+The project includes a comprehensive test suite:
+
+- **Unit tests**: Cover core logic functions (parsing, validation, statistics, metrics processing)
+- **Integration tests**: Validate the PR benchmarking workflow with mock components
+
+Tests run without requiring a Valkey server or PostgreSQL.
 
 ```bash
 # Install dependencies (includes test deps)
@@ -419,7 +426,35 @@ pip install --require-hashes -r requirements.txt
 
 # Run all tests
 python -m pytest tests/ -v
+
+# Run only unit tests
+python -m pytest tests/ -v --ignore=tests/integration/
+
+# Run only integration tests
+python -m pytest tests/integration/ -v
+
+# Run tests excluding slow tests
+python -m pytest tests/ -v -m "not slow"
 ```
+
+#### Integration Tests
+
+The integration tests (`tests/integration/`) validate the PR benchmarking workflow:
+
+| Test File | Coverage |
+|-----------|----------|
+| `test_git_operations.py` | Git repo operations, branch management, PR simulation |
+| `test_comparison_workflow.py` | Metrics comparison, statistical analysis, markdown output |
+| `test_benchmark_execution.py` | Config loading, command building, metrics processing |
+| `test_pr_workflow.py` | End-to-end workflow simulation, regression detection |
+
+Key features:
+- **Mock benchmark binary**: Simulates `valkey-benchmark` output without real server
+- **Real git operations**: Uses temporary repositories for authentic testing
+- **No external dependencies**: Runs in CI without Valkey, databases, or network
+- **Fast execution**: ~1-2 seconds for all integration tests
+
+See `tests/integration/README.md` for detailed documentation.
 
 Tests are automatically run on every push and pull request via GitHub Actions (`.github/workflows/tests.yml`).
 
