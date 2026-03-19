@@ -403,6 +403,12 @@ For local development, simply run:
 python benchmark.py
 ```
 
+Code formatting is enforced by CI using black. To format locally:
+```bash
+pip install black==25.1.0
+black .
+```
+
 ### Running Tests
 
 The project includes a test suite covering core logic functions (parsing, validation, statistics, metrics processing, etc.). Tests run without requiring a Valkey server or PostgreSQL.

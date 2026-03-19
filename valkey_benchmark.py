@@ -17,6 +17,7 @@ import valkey
 from process_metrics import MetricsProcessor
 from valkey_server import ServerLauncher
 from profiler import PerformanceProfiler
+from utils.git_utils import resolve_ref, get_commit_timestamp
 
 # Constants
 VALKEY_BENCHMARK = "src/valkey-benchmark"
@@ -213,24 +214,11 @@ class ClientRunner:
     def get_commit_time(self, commit_id: str) -> str:
         """Return timestamp for a commit."""
         try:
-            result = self._run(
-                ["git", "show", "-s", "--format=%cI", commit_id],
-                cwd=self.valkey_path,
-                capture_output=True,
-            )
-            if result is None:
-                raise RuntimeError("Failed to get commit time: no result returned")
-            return result.stdout.strip()
-        except Exception:
-            logging.warning(f"Could not resolve '{commit_id}', falling back to HEAD")
-            result = self._run(
-                ["git", "show", "-s", "--format=%cI", "HEAD"],
-                cwd=self.valkey_path,
-                capture_output=True,
-            )
-            if result is None:
-                raise RuntimeError("Failed to get commit time for HEAD")
-            return result.stdout.strip()
+            sha = resolve_ref(commit_id, self.valkey_path)
+            return get_commit_timestamp(sha, self.valkey_path)
+        except Exception as e:
+            logging.exception(f"Failed to get commit time for {commit_id}: {e}")
+            raise
 
     def _get_active_ports(self) -> List[int]:
         """Return ports based on actual cluster mode."""
