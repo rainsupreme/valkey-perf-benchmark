@@ -1,8 +1,7 @@
 """Unit tests for ClientRunner.get_commit_time."""
 
-import subprocess
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
@@ -25,38 +24,40 @@ def runner(minimal_valid_config):
 
 
 class TestGetCommitTime:
-    """Tests for get_commit_time with HEAD fallback."""
+    """Tests for get_commit_time."""
 
-    def test_direct_ref_works(self, runner):
-        """When the ref resolves directly, return its timestamp."""
-        with patch.object(runner, "_run") as mock_run:
-            mock_run.return_value = MagicMock(stdout="2026-03-18T01:00:00-07:00")
-            result = runner.get_commit_time("abc123")
-            assert result == "2026-03-18T01:00:00-07:00"
-            mock_run.assert_called_once()
+    @patch("valkey_benchmark.get_commit_timestamp")
+    @patch("valkey_benchmark.resolve_ref")
+    def test_resolves_ref_and_returns_timestamp(
+        self, mock_resolve, mock_timestamp, runner
+    ):
+        """Resolves the ref to a SHA, then returns its timestamp."""
+        mock_resolve.return_value = "abc123full"
+        mock_timestamp.return_value = "2026-03-18T01:00:00-07:00"
 
-    def test_falls_back_to_head(self, runner):
-        """When the ref fails, fall back to HEAD."""
-        with patch.object(runner, "_run") as mock_run:
-            mock_run.side_effect = [
-                RuntimeError("unknown revision"),  # first call fails
-                MagicMock(stdout="2026-03-17T22:00:00-07:00"),  # HEAD succeeds
-            ]
-            result = runner.get_commit_time("unstable")
-            assert result == "2026-03-17T22:00:00-07:00"
-            assert mock_run.call_count == 2
-            # Second call should use HEAD
-            assert mock_run.call_args_list[1][0][0] == [
-                "git",
-                "show",
-                "-s",
-                "--format=%cI",
-                "HEAD",
-            ]
+        result = runner.get_commit_time("abc123")
 
-    def test_both_fail_raises(self, runner):
-        """When both ref and HEAD fail, raise."""
-        with patch.object(runner, "_run") as mock_run:
-            mock_run.side_effect = RuntimeError("git broken")
-            with pytest.raises(RuntimeError):
-                runner.get_commit_time("unstable")
+        assert result == "2026-03-18T01:00:00-07:00"
+        mock_resolve.assert_called_once_with("abc123", runner.valkey_path)
+        mock_timestamp.assert_called_once_with("abc123full", runner.valkey_path)
+
+    @patch("valkey_benchmark.get_commit_timestamp")
+    @patch("valkey_benchmark.resolve_ref")
+    def test_resolve_failure_raises(self, mock_resolve, mock_timestamp, runner):
+        """When resolve_ref fails, the error is re-raised."""
+        mock_resolve.side_effect = RuntimeError("unknown revision")
+
+        with pytest.raises(RuntimeError, match="unknown revision"):
+            runner.get_commit_time("bad-ref")
+
+        mock_timestamp.assert_not_called()
+
+    @patch("valkey_benchmark.get_commit_timestamp")
+    @patch("valkey_benchmark.resolve_ref")
+    def test_timestamp_failure_raises(self, mock_resolve, mock_timestamp, runner):
+        """When get_commit_timestamp fails, the error is re-raised."""
+        mock_resolve.return_value = "abc123full"
+        mock_timestamp.side_effect = RuntimeError("git broken")
+
+        with pytest.raises(RuntimeError, match="git broken"):
+            runner.get_commit_time("abc123")
