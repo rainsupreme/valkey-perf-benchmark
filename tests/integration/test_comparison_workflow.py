@@ -78,8 +78,8 @@ class TestComparisonWorkflow:
             ],
         )
 
-        assert "| 1 |" in content or "Pipeline" in content
-        assert "| 10 |" in content or "10" in content
+        assert "P1" in content
+        assert "P10" in content
 
     def test_compare_empty_baseline_fails_gracefully(self, tmp_path):
         """Test comparison handles missing baseline gracefully."""
