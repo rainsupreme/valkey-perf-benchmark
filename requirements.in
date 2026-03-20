@@ -15,7 +15,11 @@ valkey
 matplotlib
 numpy
 scipy
+uncertainties
 psycopg2-binary>=2.9.0
 psutil
 pytest>=7.0
 hypothesis>=6.0
+exceptiongroup>=1.0.0  # Required by hypothesis/pytest on Python <3.11
+tomli>=1.0.0  # Required by pytest on Python <3.11
+async-timeout>=4.0.3  # Required by valkey on Python <3.11
